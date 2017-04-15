@@ -50,14 +50,21 @@ connection.query("SELECT * FROM Products", function(err, results) {
 					id : answer.choice
 					}], function(err, results) {
 				 	if (err) throw err;
-				 	console.log(results);
-				 	qInquiry();	
+				 	 for (var i = 0; i < results.length; i++) {
+    	//id.push(results[i].id);
+    	//product.push(results[i].product_name);
+    	//price.push(results[i].price);
+        console.log("You chose to buy: " +results[i].product_name);
+
+        }
+				 	//console.log(results);
+				 	qInquiry(answer.choice);	
 					});
 		 		});		
 	}
 	
 	
-	function qInquiry(){
+	function qInquiry(item){
 		inquirer.prompt([
 					  {
 					    type: "input",
@@ -65,22 +72,44 @@ connection.query("SELECT * FROM Products", function(err, results) {
 					    message: "Please enter the quantity you would like to purchase:"
 					  }
 		]).then(function(answer) {
-						console.log(answer.quantity);
-						}), function(err, results) {
-					 	if (err) throw err;
-					 	}
 						
+		connection.query("SELECT `stock_quantity`,`price` FROM Products WHERE ?", [{
+
+						id : item
+						}], function(err, results) {
+								if (err) throw err;
+					 			//console.log("We have "+results[j].stock_quantity + " left in stock");
+					 			for (var j = 0; j < results.length; j++) {
+					   console.log("Price of 1 item is : $"+results[j].price);
+					   console.log("We have "+results[j].stock_quantity + " left in stock");
+	        			if (answer.quantity < parseInt(results[j].stock_quantity)){
+	        				connection.query("UPDATE Products SET ? WHERE ?", [{
+          					stock_quantity: parseInt(results[j].stock_quantity)-1
+        				}, { id: item
+
+        				 }], function(error) {
+								if (err) throw err;
+
+							});		
+							console.log("The total cost of your purchase is "+ results[j].price * answer.quantity);
+							console.log("Your items will be shipped right away, Thank you");
+							console.log("now we have "+results[j].stock_quantity + " of this item left in stock");
+
+						}
+									 	//  if (answer.quantity === 0 ){
+											// console.log("zero");
+									 	// }
+									 	
+									 	 if (answer.quantity > parseInt(results[j].stock_quantity)){
+											console.log("Oh sorry, we only have "+results[j].stock_quantity+ " of this item left in stock" );
+									 	}
+        						 }
+        						 
+		});		
+								 
+		});
 	}
 
 
-// if (chosenItem.highest_bid < parseInt(answer.bid)) {
-//         // bid was high enough, so update db, let the user know, and start over
-//         connection.query("UPDATE auctions SET ? WHERE ?", [{
-//           highest_bid: answer.bid
-//         }, {
-//           id: chosenItem.id
-//         }], function(error) {
-//           if (error) throw err;
-//           console.log("Bid placed successfully!");
-//           start();
-//         });
+
+
